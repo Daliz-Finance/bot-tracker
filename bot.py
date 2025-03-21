@@ -8,6 +8,7 @@ from aiogram.client.default import DefaultBotProperties
 from datetime import datetime
 
 # Отримуємо токен із змінних середовища (не хардкодимо!)
+import os
 TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
