@@ -1,25 +1,19 @@
 import sqlite3
 import asyncio
-import logging
-import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.types import Message, ChatMemberUpdated
 from aiogram.client.default import DefaultBotProperties
 from datetime import datetime
 
-# Отримуємо токен із змінних середовища (не хардкодимо!)
-import os
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "BOT_TOKEN"
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 
-# Підключення до бази даних (в тій же директорії, що і код)
-DB_FILE = "chat_activity.db"
-conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+# Підключення до бази даних
+conn = sqlite3.connect("chat_activity.db", check_same_thread=False)
 cursor = conn.cursor()
-
-# Таблиця для збереження активності користувачів
 cursor.execute('''CREATE TABLE IF NOT EXISTS activity (
     user_id INTEGER,
     username TEXT,
@@ -30,7 +24,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS activity (
 )''')
 conn.commit()
 
-# Логування активності
+# Логування активності користувачів (без відповіді в групу)
 async def log_activity(user: types.User, action: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("INSERT INTO activity (user_id, username, first_name, last_name, timestamp, action) VALUES (?, ?, ?, ?, ?, ?)",
@@ -92,11 +86,11 @@ async def send_stats(message: Message):
 
 async def main():
     print("✅ Бот запущено і чекає на повідомлення...")
-    dp.message.register(track_activity)  # Обробляємо всі повідомлення
+
+    dp.message.register(track_activity)  # Обробляємо всі повідомлення, але не відповідаємо на них
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=["message"])
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
